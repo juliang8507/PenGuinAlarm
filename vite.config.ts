@@ -8,27 +8,25 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'assets/**/*'],
+      includeAssets: ['penguin-icon-192.png', 'penguin-icon-512.png', 'assets/**/*'],
       manifest: {
-        name: 'Nebula Alarm',
-        short_name: 'Nebula',
-        description: '아름다운 알람 앱',
-        theme_color: '#1a1a2e',
-        background_color: '#1a1a2e',
+        name: 'PenGuin Alarm',
+        short_name: 'PenGuin',
+        description: '귀여운 펭귄 테마 알람 시계 애플리케이션',
+        theme_color: '#6b4cff',
+        background_color: '#0a0a1a',
         display: 'standalone',
+        orientation: 'portrait',
+        lang: 'ko',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'penguin-icon-192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
+            src: 'penguin-icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
