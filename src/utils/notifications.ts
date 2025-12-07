@@ -74,8 +74,8 @@ class NotificationManager {
             actions?: Array<{ action: string; title: string; icon?: string }>;
         } = {
             body: t('notificationBody'),
-            icon: '/penguin-icon-192.jpg',
-            badge: '/penguin-icon-192.jpg',
+            icon: '/penguin-icon-192.png',
+            badge: '/penguin-icon-192.png',
             tag: 'nebula-alarm',
             requireInteraction: true,
             // Only include vibrate if user has set a pattern (undefined/null means vibration is off)
