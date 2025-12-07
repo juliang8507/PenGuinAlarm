@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
@@ -22,6 +22,8 @@ export default defineConfig({
         orientation: 'portrait',
         lang: 'ko',
         id: '/',
+        scope: '/',
+        start_url: '/',
         prefer_related_applications: false,
         icons: [
           {
