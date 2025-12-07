@@ -538,7 +538,7 @@ describe('Reliability Tests - Wake Lock Lifecycle', () => {
 
         // Get reference to the mock
         const { wakeLockManager } = await import('../utils/notifications');
-        wakeLockManagerMock = wakeLockManager as typeof wakeLockManagerMock;
+        wakeLockManagerMock = wakeLockManager as unknown as typeof wakeLockManagerMock;
     });
 
     afterEach(() => {
