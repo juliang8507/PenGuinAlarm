@@ -26,5 +26,7 @@
         "lifestyle"
     ],
     "lang": "ko",
-    "dir": "ltr"
+    "dir": "ltr",
+    "id": "/",
+    "prefer_related_applications": false
 }

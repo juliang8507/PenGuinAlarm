@@ -659,7 +659,7 @@ export const useAlarm = () => {
     // Set custom sound
     const handleCustomSoundSelect = useCallback(async (file: File) => {
         try {
-            await audioEngine.setCustomSound(file);
+            const highlightResult = await audioEngine.setCustomSound(file);
 
             // Convert to base64 for storage
             const base64 = await alarmStorage.fileToBase64(file);
@@ -677,6 +677,8 @@ export const useAlarm = () => {
                 customSoundName: file.name,
                 customSoundData: base64,
             }));
+
+            return highlightResult;
         } catch (e) {
             console.error('Failed to set custom sound:', e);
             throw e;

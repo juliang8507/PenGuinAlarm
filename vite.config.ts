@@ -11,7 +11,7 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
-      includeAssets: ['penguin-icon-192.png', 'penguin-icon-512.png', 'assets/**/*'],
+      includeAssets: ['penguin-icon-192.png', 'penguin-icon-512.png', 'assets/**/*', '.well-known/**/*'],
       manifest: {
         name: 'PenGuin Alarm',
         short_name: 'PenGuin',
@@ -21,6 +21,8 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         lang: 'ko',
+        id: '/',
+        prefer_related_applications: false,
         icons: [
           {
             src: 'penguin-icon-192.png',

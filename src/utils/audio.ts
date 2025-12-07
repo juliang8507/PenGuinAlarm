@@ -73,6 +73,14 @@ export const SOUND_PRESETS: SoundPreset[] = [
     },
 ];
 
+// Highlight detection result interface
+export interface HighlightResult {
+    offset: number;        // Start position in seconds
+    duration: number;      // Total audio duration
+    confidence: number;    // 0-1, how confident we are this is the "best" part
+    analyzing: boolean;    // Whether analysis is in progress
+}
+
 class AudioEngine {
     private ctx: AudioContext | null = null;
     private oscillators: OscillatorNode[] = [];
@@ -88,6 +96,11 @@ class AudioEngine {
     private volume: number = 0.7;
     private fadeDuration: number = 30; // seconds
     private currentPreset: string = 'ethereal';
+
+    // Highlight detection
+    private highlightOffset: number = 0;  // Start position for custom sound
+    private highlightConfidence: number = 0;
+    private isAnalyzing: boolean = false;
 
     constructor() {
         // Initialize on user interaction usually, but we'll setup the context lazily
@@ -160,11 +173,7 @@ class AudioEngine {
      * @throws Error with i18n key if validation fails
      */
     private validateAudioFile(file: File): void {
-        // Size limit: 10MB
-        const MAX_SIZE = 10 * 1024 * 1024;
-        if (file.size > MAX_SIZE) {
-            throw new Error('soundSizeError');
-        }
+        // No file size limit - users can use any audio file from their device
 
         // MIME type validation
         const validTypes = [
@@ -195,10 +204,81 @@ class AudioEngine {
     }
 
     /**
-     * Set custom sound from file
+     * Detect the highlight (most energetic/exciting part) of an audio buffer
+     * Uses energy analysis with multiple window sizes to find the "drop" or chorus
+     */
+    private detectHighlight(buffer: AudioBuffer): { offset: number; confidence: number } {
+        const channelData = buffer.getChannelData(0); // Use first channel
+        const sampleRate = buffer.sampleRate;
+        const duration = buffer.duration;
+
+        // Skip very short audio files (< 10 seconds)
+        if (duration < 10) {
+            return { offset: 0, confidence: 0.5 };
+        }
+
+        // Window size: 5 seconds for energy analysis
+        const windowSize = Math.floor(sampleRate * 5);
+        const hopSize = Math.floor(sampleRate * 1); // 1 second hop for finer resolution
+        const numWindows = Math.floor((channelData.length - windowSize) / hopSize) + 1;
+
+        if (numWindows < 3) {
+            return { offset: 0, confidence: 0.5 };
+        }
+
+        // Calculate RMS energy for each window
+        const energies: number[] = [];
+        for (let i = 0; i < numWindows; i++) {
+            const start = i * hopSize;
+            const end = Math.min(start + windowSize, channelData.length);
+
+            let sumSquares = 0;
+            for (let j = start; j < end; j++) {
+                sumSquares += channelData[j] * channelData[j];
+            }
+            const rms = Math.sqrt(sumSquares / (end - start));
+            energies.push(rms);
+        }
+
+        // Find the peak energy region
+        // Look for sustained high energy (not just a spike)
+        let maxEnergySum = 0;
+        let maxEnergyIndex = 0;
+        const sustainedWindowCount = 3; // Look for 3 consecutive high-energy windows
+
+        for (let i = 0; i <= energies.length - sustainedWindowCount; i++) {
+            let sum = 0;
+            for (let j = 0; j < sustainedWindowCount; j++) {
+                sum += energies[i + j];
+            }
+            if (sum > maxEnergySum) {
+                maxEnergySum = sum;
+                maxEnergyIndex = i;
+            }
+        }
+
+        // Calculate confidence based on how much higher the peak is compared to average
+        const avgEnergy = energies.reduce((a, b) => a + b, 0) / energies.length;
+        const peakEnergy = maxEnergySum / sustainedWindowCount;
+        const confidence = Math.min(1, Math.max(0.3, (peakEnergy / avgEnergy - 1) / 2 + 0.5));
+
+        // Calculate the offset in seconds
+        // Start slightly before the peak for better user experience
+        const peakOffsetSeconds = (maxEnergyIndex * hopSize) / sampleRate;
+        const adjustedOffset = Math.max(0, peakOffsetSeconds - 2); // Start 2 seconds before peak
+
+        // Don't start too close to the end (leave at least 30 seconds)
+        const maxOffset = Math.max(0, duration - 30);
+        const finalOffset = Math.min(adjustedOffset, maxOffset);
+
+        return { offset: finalOffset, confidence };
+    }
+
+    /**
+     * Set custom sound from file with automatic highlight detection
      * @throws Error with i18n key if validation or decoding fails
      */
-    public async setCustomSound(file: File): Promise<void> {
+    public async setCustomSound(file: File): Promise<HighlightResult> {
         // Validate file before processing
         this.validateAudioFile(file);
 
@@ -207,10 +287,26 @@ class AudioEngine {
             throw new Error('soundLoadError');
         }
 
+        this.isAnalyzing = true;
+
         try {
             const arrayBuffer = await file.arrayBuffer();
             this.customBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+
+            // Detect highlight automatically
+            const { offset, confidence } = this.detectHighlight(this.customBuffer);
+            this.highlightOffset = offset;
+            this.highlightConfidence = confidence;
+            this.isAnalyzing = false;
+
+            return {
+                offset: this.highlightOffset,
+                duration: this.customBuffer.duration,
+                confidence: this.highlightConfidence,
+                analyzing: false,
+            };
         } catch (e) {
+            this.isAnalyzing = false;
             // decodeAudioData failed - format not supported by browser
             console.error('Audio decode failed:', e);
             throw new Error('soundFormatError');
@@ -218,10 +314,42 @@ class AudioEngine {
     }
 
     /**
-     * Clear custom sound
+     * Get current highlight information
+     */
+    public getHighlightInfo(): HighlightResult | null {
+        if (!this.customBuffer) return null;
+        return {
+            offset: this.highlightOffset,
+            duration: this.customBuffer.duration,
+            confidence: this.highlightConfidence,
+            analyzing: this.isAnalyzing,
+        };
+    }
+
+    /**
+     * Manually set highlight offset (user override)
+     */
+    public setHighlightOffset(offset: number): void {
+        if (this.customBuffer) {
+            this.highlightOffset = Math.max(0, Math.min(offset, this.customBuffer.duration - 10));
+            this.highlightConfidence = 1; // User-set = 100% confidence
+        }
+    }
+
+    /**
+     * Get highlight offset in seconds
+     */
+    public getHighlightOffset(): number {
+        return this.highlightOffset;
+    }
+
+    /**
+     * Clear custom sound and highlight info
      */
     public clearCustomSound(): void {
         this.customBuffer = null;
+        this.highlightOffset = 0;
+        this.highlightConfidence = 0;
     }
 
     /**
@@ -329,12 +457,16 @@ class AudioEngine {
         );
 
         if (this.customBuffer) {
-            // Play custom sound
+            // Play custom sound from highlight position
             this.sourceNode = this.ctx.createBufferSource();
             this.sourceNode.buffer = this.customBuffer;
             this.sourceNode.loop = true;
+            // Set loop points to start from highlight and loop back to it
+            this.sourceNode.loopStart = this.highlightOffset;
+            this.sourceNode.loopEnd = this.customBuffer.duration;
             this.sourceNode.connect(this.masterGain);
-            this.sourceNode.start();
+            // Start playback from highlight offset
+            this.sourceNode.start(0, this.highlightOffset);
         } else {
             // Play preset sound
             const preset = SOUND_PRESETS.find(p => p.id === this.currentPreset) || SOUND_PRESETS[0];
@@ -447,7 +579,44 @@ class AudioEngine {
         this.sourceNode.buffer = this.customBuffer;
         this.sourceNode.loop = false;
         this.sourceNode.connect(this.masterGain);
-        this.sourceNode.start();
+        // Start from highlight position for preview
+        this.sourceNode.start(0, this.highlightOffset);
+
+        this.isPreviewing = true;
+
+        // Auto-stop after duration
+        this.previewTimeout = setTimeout(() => {
+            this.stopPreview();
+        }, duration * 1000);
+    }
+
+    /**
+     * Preview custom sound from a specific position
+     */
+    public previewFromPosition(position: number, duration: number = 5): void {
+        if (!this.customBuffer) return;
+        if (this.isPreviewing) {
+            this.stopPreview();
+        }
+
+        this.init();
+        if (!this.ctx) return;
+
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(this.volume * 0.7, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
+
+        this.sourceNode = this.ctx.createBufferSource();
+        this.sourceNode.buffer = this.customBuffer;
+        this.sourceNode.loop = false;
+        this.sourceNode.connect(this.masterGain);
+        // Start from specified position
+        const safePosition = Math.max(0, Math.min(position, this.customBuffer.duration - duration));
+        this.sourceNode.start(0, safePosition);
 
         this.isPreviewing = true;
 

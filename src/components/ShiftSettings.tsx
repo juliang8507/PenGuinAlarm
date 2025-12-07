@@ -6,7 +6,7 @@ import { ko, enUS } from 'date-fns/locale';
 import { t, getLanguage } from '../utils/i18n';
 import type { TranslationKey } from '../utils/i18n';
 import type { Recurrence, VibrationPattern, MissionType, MissionDifficulty } from '../hooks/useAlarm';
-import { audioEngine, SOUND_PRESETS } from '../utils/audio';
+import { audioEngine, SOUND_PRESETS, type HighlightResult } from '../utils/audio';
 
 interface ShiftSettingsProps {
     isOpen: boolean;
@@ -16,7 +16,7 @@ interface ShiftSettingsProps {
     startDate: Date;
     setStartDate: (d: Date) => void;
     customSoundName: string | null;
-    setCustomSound: (file: File) => void;
+    setCustomSound: (file: File) => Promise<HighlightResult>;
     volume: number;
     setVolume: (v: number) => void;
     fadeDuration: number;
@@ -76,6 +76,8 @@ const ShiftSettings: React.FC<ShiftSettingsProps> = ({
     const [previewingPreset, setPreviewingPreset] = useState<string | null>(null);
     const [soundError, setSoundError] = useState<string | null>(null);
     const [isQrScanning, setIsQrScanning] = useState(false);
+    const [highlightInfo, setHighlightInfo] = useState<HighlightResult | null>(null);
+    const [isAnalyzingAudio, setIsAnalyzingAudio] = useState(false);
 
     // Generate calendar days for the current month view
     const calendarDays = useMemo(() => {
@@ -348,7 +350,10 @@ const ShiftSettings: React.FC<ShiftSettingsProps> = ({
                                         if (e.target.files?.[0]) {
                                             try {
                                                 setSoundError(null);
-                                                await setCustomSound(e.target.files[0]);
+                                                setHighlightInfo(null);
+                                                setIsAnalyzingAudio(true);
+                                                const result = await setCustomSound(e.target.files[0]);
+                                                setHighlightInfo(result as HighlightResult);
                                             } catch (err) {
                                                 const validErrorKeys: TranslationKey[] = ['soundLoadError', 'soundFormatError', 'soundSizeError'];
                                                 const errorMsg = err instanceof Error ? err.message : 'soundLoadError';
@@ -356,6 +361,8 @@ const ShiftSettings: React.FC<ShiftSettingsProps> = ({
                                                     ? (errorMsg as TranslationKey)
                                                     : 'soundLoadError';
                                                 setSoundError(t(errorKey));
+                                            } finally {
+                                                setIsAnalyzingAudio(false);
                                             }
                                         }
                                     }}
@@ -394,6 +401,54 @@ const ShiftSettings: React.FC<ShiftSettingsProps> = ({
                                 </div>
                                 {soundError && (
                                     <p className="text-red-400 text-xs mt-2">{soundError}</p>
+                                )}
+
+                                {/* Analyzing Audio Indicator */}
+                                {isAnalyzingAudio && (
+                                    <div className="flex items-center gap-2 mt-3 text-nebula-400 text-sm">
+                                        <div className="w-4 h-4 border-2 border-nebula-400 border-t-transparent rounded-full animate-spin" />
+                                        <span>{t('analyzingAudio')}</span>
+                                    </div>
+                                )}
+
+                                {/* Highlight Detection Result */}
+                                {highlightInfo && !isAnalyzingAudio && customSoundName && (
+                                    <div className="mt-3 p-3 bg-nebula-500/10 rounded-lg border border-nebula-500/30">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Music className="w-4 h-4 text-nebula-400" />
+                                            <span className="text-sm text-nebula-300 font-medium">
+                                                {t('highlightDetected')}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                            <div className="flex justify-between">
+                                                <span className="text-white/50">{t('highlightPosition')}:</span>
+                                                <span className="text-white font-mono">
+                                                    {Math.floor(highlightInfo.offset / 60)}:{String(Math.floor(highlightInfo.offset % 60)).padStart(2, '0')}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-white/50">{t('highlightConfidence')}:</span>
+                                                <span className={`font-medium ${
+                                                    highlightInfo.confidence > 0.7 ? 'text-green-400' :
+                                                    highlightInfo.confidence > 0.4 ? 'text-yellow-400' : 'text-orange-400'
+                                                }`}>
+                                                    {highlightInfo.confidence > 0.7 ? t('highlightConfidenceHigh') :
+                                                     highlightInfo.confidence > 0.4 ? t('highlightConfidenceMedium') : t('highlightConfidenceLow')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                audioEngine.setVolume(volume);
+                                                audioEngine.previewFromPosition(highlightInfo.offset, 5);
+                                            }}
+                                            className="mt-2 w-full py-1.5 text-xs bg-nebula-500/30 hover:bg-nebula-500/50 text-nebula-300 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                        >
+                                            <Play className="w-3 h-3" />
+                                            {t('highlightPreviewFrom')} ({Math.floor(highlightInfo.offset / 60)}:{String(Math.floor(highlightInfo.offset % 60)).padStart(2, '0')})
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>

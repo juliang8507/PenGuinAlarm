@@ -319,6 +319,27 @@ export const translations = {
         typingQuoteHard1: '성공은 열정을 잃지 않고 실패에서 실패로 나아가는 것이다.',
         typingQuoteHard2: '천 리 길도 한 걸음부터 시작된다는 것을 기억하세요.',
         typingQuoteHard3: '오늘의 노력이 내일의 자신을 만들어갑니다.',
+
+        // Highlight Detection
+        analyzingAudio: '오디오 분석 중...',
+        highlightDetected: '하이라이트 감지됨',
+        highlightPosition: '시작 위치',
+        highlightConfidence: '신뢰도',
+        highlightConfidenceHigh: '높음',
+        highlightConfidenceMedium: '보통',
+        highlightConfidenceLow: '낮음',
+        highlightManualAdjust: '수동 조정',
+        highlightPreviewFrom: '미리듣기',
+
+        // PWA Install (iOS)
+        installForBestExperience: '최고의 경험을 위해 앱을 설치하세요',
+        installBenefits: '주소창 없이 전체 화면으로 사용할 수 있습니다',
+        iosInstallStep1: '하단의 공유 버튼을 탭하세요',
+        iosInstallStep2: '"홈 화면에 추가"를 선택하세요',
+        iosInstallStep3: '"추가"를 탭하여 완료하세요',
+        shareIcon: '공유',
+        addToHomeScreen: '홈 화면에 추가',
+        runningInBrowser: '브라우저에서 실행 중',
     },
     en: {
         // App header
@@ -636,6 +657,27 @@ export const translations = {
         typingQuoteHard1: 'Success is going from failure to failure without losing enthusiasm.',
         typingQuoteHard2: 'Remember that a journey of a thousand miles begins with a single step.',
         typingQuoteHard3: "Today's effort shapes tomorrow's you.",
+
+        // Highlight Detection
+        analyzingAudio: 'Analyzing audio...',
+        highlightDetected: 'Highlight detected',
+        highlightPosition: 'Start position',
+        highlightConfidence: 'Confidence',
+        highlightConfidenceHigh: 'High',
+        highlightConfidenceMedium: 'Medium',
+        highlightConfidenceLow: 'Low',
+        highlightManualAdjust: 'Adjust manually',
+        highlightPreviewFrom: 'Preview',
+
+        // PWA Install (iOS)
+        installForBestExperience: 'Install the app for the best experience',
+        installBenefits: 'Use full screen without the address bar',
+        iosInstallStep1: 'Tap the Share button at the bottom',
+        iosInstallStep2: 'Select "Add to Home Screen"',
+        iosInstallStep3: 'Tap "Add" to complete',
+        shareIcon: 'Share',
+        addToHomeScreen: 'Add to Home Screen',
+        runningInBrowser: 'Running in browser',
     },
 } as const;
 
