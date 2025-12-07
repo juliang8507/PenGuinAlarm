@@ -1,12 +1,15 @@
 // IndexedDB + localStorage fallback for alarm state persistence
 
 const DB_NAME = 'nebula-alarm-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Unified schema with all stores
 const STORE_NAME = 'alarm-settings';
+const SCHEDULE_STORE_NAME = 'alarm-store'; // Also create for SW/alarmPersistence
 const LS_KEY = 'nebula-alarm-settings';
 
 export interface AlarmSettings {
-    alarmTime: string | null; // ISO string
+    alarmTime: string | null; // ISO string (legacy, kept for backward compatibility)
+    alarmHour: number | null; // Timezone-independent hour (0-23)
+    alarmMinute: number | null; // Timezone-independent minute (0-59)
     recurrence: 'daily' | 'every-other-day';
     startDate: string; // ISO string
     customSoundName: string | null;
@@ -31,6 +34,8 @@ export interface AlarmSettings {
 
 export const defaultSettings: AlarmSettings = {
     alarmTime: null,
+    alarmHour: null,
+    alarmMinute: null,
     recurrence: 'daily',
     startDate: new Date().toISOString(),
     customSoundName: null,
@@ -73,8 +78,13 @@ class AlarmStorage {
 
             request.onupgradeneeded = (event) => {
                 const db = (event.target as IDBOpenDBRequest).result;
+                // Create settings store for main app
                 if (!db.objectStoreNames.contains(STORE_NAME)) {
                     db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                }
+                // Create schedule store for SW/alarmPersistence
+                if (!db.objectStoreNames.contains(SCHEDULE_STORE_NAME)) {
+                    db.createObjectStore(SCHEDULE_STORE_NAME);
                 }
             };
         });

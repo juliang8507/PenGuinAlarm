@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useWeather } from '../useWeather';
+import { t } from '../../utils/i18n';
 
 describe('useWeather', () => {
   const mockGeolocation = {
@@ -23,6 +24,8 @@ describe('useWeather', () => {
     // @ts-expect-error Mock geolocation
     navigator.geolocation = mockGeolocation;
     globalThis.fetch = vi.fn();
+    // Clear localStorage to ensure no cached weather data affects tests
+    localStorage.clear();
   });
 
   afterEach(() => {
@@ -36,7 +39,8 @@ describe('useWeather', () => {
       expect(result.current.loading).toBe(false);
       expect(result.current.error).toBeNull();
       expect(result.current.temperature).toBe(0);
-      expect(result.current.weatherCode).toBe(0);
+      // -1 indicates disabled/no data (0 is valid "Clear" weather code)
+      expect(result.current.weatherCode).toBe(-1);
     });
 
     it('should return default values when no options provided', () => {
@@ -64,7 +68,8 @@ describe('useWeather', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.error).toBe('Geolocation not supported');
+      // Uses i18n error message (errorNetwork when geolocation not available)
+      expect(result.current.error).toBe(t('errorNetwork'));
     });
   });
 
@@ -88,7 +93,7 @@ describe('useWeather', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.error).toBe('Location permission denied');
+      expect(result.current.error).toBe(t('errorPermission'));
     });
   });
 
@@ -181,7 +186,7 @@ describe('useWeather', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.error).toBe('Failed to fetch weather');
+      expect(result.current.error).toBe(t('errorNetwork'));
     });
 
     it('should return error when json parsing fails', async () => {
@@ -204,7 +209,7 @@ describe('useWeather', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.error).toBe('Failed to fetch weather');
+      expect(result.current.error).toBe(t('errorNetwork'));
     });
   });
 
@@ -219,7 +224,7 @@ describe('useWeather', () => {
       );
 
       await waitFor(() => {
-        expect(result.current.error).toBe('Geolocation not supported');
+        expect(result.current.error).toBe(t('errorNetwork'));
       });
 
       // Restore geolocation for rerender

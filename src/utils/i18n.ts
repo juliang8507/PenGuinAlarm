@@ -19,7 +19,10 @@ export const translations = {
 
         // Time display
         nextAlarmAt: '다음 알람:',
+        nextAlarm: '다음 알람',
         noAlarmSet: '알람 없음',
+        today: '오늘',
+        tomorrow: '내일',
 
         // Footer
         swipeForSleep: '수면 사운드를 들으려면 위로 스와이프',
@@ -133,6 +136,10 @@ export const translations = {
         closeButton: '닫기',
         settingsButton: '설정',
         alarmButton: '알람',
+        viewStats: '통계 보기',
+
+        // Status
+        offline: '오프라인',
 
         // Snooze
         snoozeLimit: '스누즈 제한 횟수',
@@ -200,7 +207,7 @@ export const translations = {
         recurrence: '반복',
         startDate: '시작일',
         alarmDay: '알람일',
-        today: '오늘',
+
         change: '변경',
         fadeDurationDesc: '알람이 시작될 때 소리가 점점 커집니다',
         timeFormat: '시간 형식',
@@ -267,6 +274,51 @@ export const translations = {
         factoryReset: '공장 초기화',
         factoryResetDesc: '모든 데이터 삭제',
         confirmFactoryReset: '모든 설정과 데이터가 삭제됩니다. 계속하시겠습니까?',
+
+        // Vibration Pattern
+        vibrationPattern: '진동 패턴',
+        vibrationHeartbeat: '심장박동',
+        vibrationTicktock: '틱톡',
+        vibrationRapid: '빠른',
+        vibrationSos: 'SOS',
+        vibrationContinuous: '연속',
+        vibrationOff: '끄기',
+
+        // Mission Settings
+        missionTypeSetting: '미션 종류',
+        missionMath: '수학 문제',
+        missionMemory: '기억력 게임',
+        missionPuzzle: '퍼즐',
+        missionTyping: '타이핑',
+        missionQr: 'QR 스캔',
+        missionPhoto: '사진 촬영',
+        missionRandom: '랜덤',
+        missionDifficultySetting: '미션 난이도',
+        difficultyEasy: '쉬움',
+        difficultyMedium: '보통',
+        difficultyHard: '어려움',
+        snoozeLimitSetting: '스누즈 제한',
+        snoozeLimitDesc: '0회로 설정하면 스누즈를 사용할 수 없습니다',
+        timesUnit: '회',
+
+        // Time Picker
+        setAlarmTime: '알람 시간 설정',
+        tapToSetTime: '탭하여 시간 설정',
+        hourUnit: '시',
+        minuteUnit: '분',
+
+        // Typing Mission
+        typingMissionHeader: '✍️ 타이핑 미션',
+        missionComplete: '✓ 완료!',
+        typingQuoteEasy1: '오늘도 좋은 하루 되세요!',
+        typingQuoteEasy2: '새로운 시작을 응원합니다.',
+        typingQuoteEasy3: '행복한 하루 보내세요.',
+        typingQuoteMedium1: '어제의 나보다 오늘의 내가 더 성장하길.',
+        typingQuoteMedium2: '작은 습관이 큰 변화를 만들어갑니다.',
+        typingQuoteMedium3: '매일 조금씩 나아가면 됩니다.',
+        typingQuoteHard1: '성공은 열정을 잃지 않고 실패에서 실패로 나아가는 것이다.',
+        typingQuoteHard2: '천 리 길도 한 걸음부터 시작된다는 것을 기억하세요.',
+        typingQuoteHard3: '오늘의 노력이 내일의 자신을 만들어갑니다.',
     },
     en: {
         // App header
@@ -284,7 +336,10 @@ export const translations = {
 
         // Time display
         nextAlarmAt: 'Next alarm:',
+        nextAlarm: 'Next Alarm',
         noAlarmSet: 'No alarm set',
+        today: 'Today',
+        tomorrow: 'Tomorrow',
 
         // Footer
         swipeForSleep: 'Swipe up for sleep sounds',
@@ -398,6 +453,10 @@ export const translations = {
         closeButton: 'Close',
         settingsButton: 'Settings',
         alarmButton: 'Alarm',
+        viewStats: 'View Statistics',
+
+        // Status
+        offline: 'Offline',
 
         // Snooze
         snoozeLimit: 'Snooze limit',
@@ -465,7 +524,7 @@ export const translations = {
         recurrence: 'Recurrence',
         startDate: 'Start Date',
         alarmDay: 'Alarm day',
-        today: 'Today',
+
         change: 'Change',
         fadeDurationDesc: 'Sound gradually increases when alarm starts',
         timeFormat: 'Time Format',
@@ -532,6 +591,51 @@ export const translations = {
         factoryReset: 'Factory Reset',
         factoryResetDesc: 'Delete all data',
         confirmFactoryReset: 'All settings and data will be deleted. Continue?',
+
+        // Vibration Pattern
+        vibrationPattern: 'Vibration Pattern',
+        vibrationHeartbeat: 'Heartbeat',
+        vibrationTicktock: 'Tick Tock',
+        vibrationRapid: 'Rapid',
+        vibrationSos: 'SOS',
+        vibrationContinuous: 'Continuous',
+        vibrationOff: 'Off',
+
+        // Mission Settings
+        missionTypeSetting: 'Mission Type',
+        missionMath: 'Math Problem',
+        missionMemory: 'Memory Game',
+        missionPuzzle: 'Puzzle',
+        missionTyping: 'Typing',
+        missionQr: 'QR Scan',
+        missionPhoto: 'Photo',
+        missionRandom: 'Random',
+        missionDifficultySetting: 'Mission Difficulty',
+        difficultyEasy: 'Easy',
+        difficultyMedium: 'Medium',
+        difficultyHard: 'Hard',
+        snoozeLimitSetting: 'Snooze Limit',
+        snoozeLimitDesc: 'Set to 0 to disable snooze',
+        timesUnit: 'times',
+
+        // Time Picker
+        setAlarmTime: 'Set Alarm Time',
+        tapToSetTime: 'Tap to set time',
+        hourUnit: 'H',
+        minuteUnit: 'M',
+
+        // Typing Mission
+        typingMissionHeader: '✍️ Typing Mission',
+        missionComplete: '✓ Complete!',
+        typingQuoteEasy1: 'Have a great day!',
+        typingQuoteEasy2: 'Cheering for your new start.',
+        typingQuoteEasy3: 'Wishing you happiness.',
+        typingQuoteMedium1: 'May today be better than yesterday.',
+        typingQuoteMedium2: 'Small habits lead to big changes.',
+        typingQuoteMedium3: 'Progress a little each day.',
+        typingQuoteHard1: 'Success is going from failure to failure without losing enthusiasm.',
+        typingQuoteHard2: 'Remember that a journey of a thousand miles begins with a single step.',
+        typingQuoteHard3: "Today's effort shapes tomorrow's you.",
     },
 } as const;
 

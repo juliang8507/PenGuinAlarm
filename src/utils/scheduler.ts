@@ -198,6 +198,11 @@ class AlarmScheduler {
     private setupVisibilityListener(): void {
         if (typeof document === 'undefined') return;
 
+        // Remove existing listener to prevent accumulation on repeated init() calls
+        if (this.visibilityHandler) {
+            document.removeEventListener('visibilitychange', this.visibilityHandler);
+        }
+
         this.visibilityHandler = () => {
             const visible = document.visibilityState === 'visible';
             this.callbacks?.onVisibilityChange?.(visible);
@@ -247,6 +252,21 @@ class AlarmScheduler {
             clearTimeout(this.timeoutId);
             this.timeoutId = null;
         }
+    }
+
+    /**
+     * Cancel pending alarm timeout and reschedule for the next alarm.
+     * Use this when alarm is triggered externally (e.g., by Service Worker)
+     * to prevent duplicate alarm triggers.
+     */
+    public cancelPendingAndReschedule(): void {
+        this.clearTimeout();
+
+        // Schedule next alarm after a short delay (same as triggerAlarm does)
+        // This ensures we're past the current alarm minute
+        setTimeout(() => {
+            this.scheduleNext();
+        }, 1000);
     }
 
     /**

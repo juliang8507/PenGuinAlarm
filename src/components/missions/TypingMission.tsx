@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-
+import React, { useState, useEffect, useMemo } from 'react';
+import { t, type TranslationKey } from '../../utils/i18n';
 
 interface TypingMissionProps {
     difficulty: 'easy' | 'medium' | 'hard';
@@ -7,26 +7,17 @@ interface TypingMissionProps {
     onFail: () => void;
 }
 
-const QUOTES = {
-    easy: [
-        '오늘도 좋은 하루 되세요!',
-        '새로운 시작을 응원합니다.',
-        '행복한 하루 보내세요.',
-    ],
-    medium: [
-        '어제의 나보다 오늘의 내가 더 성장하길.',
-        '작은 노력이 큰 변화를 만들어 갑니다.',
-        '매일 조금씩 앞으로 나아가면 됩니다.',
-    ],
-    hard: [
-        '성공은 열정을 잃지 않고 실패에서 실패로 나아가는 것이다.',
-        '인생에서 가장 중요한 것은 자신을 믿고 끝까지 포기하지 않는 것이다.',
-        '꿈을 이루는 가장 좋은 방법은 깨어나는 것이다.',
-    ],
+const getQuotes = (diff: 'easy' | 'medium' | 'hard'): string[] => {
+    const quoteKeys: Record<'easy' | 'medium' | 'hard', TranslationKey[]> = {
+        easy: ['typingQuoteEasy1', 'typingQuoteEasy2', 'typingQuoteEasy3'],
+        medium: ['typingQuoteMedium1', 'typingQuoteMedium2', 'typingQuoteMedium3'],
+        hard: ['typingQuoteHard1', 'typingQuoteHard2', 'typingQuoteHard3'],
+    };
+    return quoteKeys[diff].map(key => t(key));
 };
 
 const getRandomQuote = (diff: 'easy' | 'medium' | 'hard') => {
-    const quotes = QUOTES[diff];
+    const quotes = getQuotes(diff);
     return quotes[Math.floor(Math.random() * quotes.length)];
 };
 
@@ -60,13 +51,13 @@ const TypingMission: React.FC<TypingMissionProps> = ({ difficulty, onComplete, o
     };
 
     const isCorrect = input === targetQuote;
-    const progress = targetQuote.split('').map((char, idx) => input[idx] === char);
+    const progress = useMemo(() => targetQuote.split('').map((char, idx) => input[idx] === char), [targetQuote, input]);
 
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h2 className="text-2xl font-bold text-white mb-2">✍️ 타이핑 미션</h2>
-                <p className="text-white/70">아래 문장을 정확히 입력하세요</p>
+                <h2 className="text-2xl font-bold text-white mb-2">{t('typingMissionHeader')}</h2>
+                <p className="text-white/70">{t('typeQuote')}</p>
             </div>
 
             {/* Target Quote */}
@@ -94,10 +85,10 @@ const TypingMission: React.FC<TypingMissionProps> = ({ difficulty, onComplete, o
                 type="text"
                 value={input}
                 onChange={handleInputChange}
-                placeholder="여기에 입력하세요..."
+                placeholder={t('typeHere')}
                 className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-nebula-500"
                 autoFocus
-                aria-label="타이핑 입력"
+                aria-label={t('typingMission')}
             />
 
             {/* Submit Button */}
@@ -109,12 +100,12 @@ const TypingMission: React.FC<TypingMissionProps> = ({ difficulty, onComplete, o
                     : 'bg-nebula-500 text-white hover:bg-nebula-400'
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-                {isCorrect ? '✓ 완료!' : '확인'}
+                {isCorrect ? t('missionComplete') : t('confirm')}
             </button>
 
             {/* Attempts Counter */}
             <p className="text-center text-white/50 text-sm">
-                시도: {attempts} / {maxAttempts}
+                {t('attempts')}: {attempts} / {maxAttempts}
             </p>
         </div>
     );

@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, typ
 import type { MissionType } from '../hooks/useAlarm';
 
 export interface WakeUpLog {
+    id: string; // Unique identifier (date + timestamp)
     date: string; // YYYY-MM-DD
     wakeUpTime: string; // HH:mm
     snoozeCount: number;
@@ -16,7 +17,7 @@ export interface WakeUpLog {
 
 interface StatisticsContextValue {
     logs: WakeUpLog[];
-    addLog: (log: Omit<WakeUpLog, 'date' | 'wakeUpTime' | 'actualWakeTime'>) => void;
+    addLog: (log: Omit<WakeUpLog, 'id' | 'date' | 'wakeUpTime' | 'actualWakeTime'>) => void;
     clearLogs: () => void;
     getStats: () => {
         logs: WakeUpLog[];
@@ -53,9 +54,15 @@ export const StatisticsProvider: React.FC<{ children: ReactNode }> = ({ children
     }, [logs]);
 
     // Add a new wake-up log
-    const addLog = useCallback((log: Omit<WakeUpLog, 'date' | 'wakeUpTime' | 'actualWakeTime'>) => {
+    const addLog = useCallback((log: Omit<WakeUpLog, 'id' | 'date' | 'wakeUpTime' | 'actualWakeTime'>) => {
         const now = new Date();
         const actualWakeTime = now.toTimeString().slice(0, 5);
+
+        // Use local date format (YYYY-MM-DD) to avoid UTC timezone issues
+        const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        // Generate unique ID using date + timestamp to allow multiple entries per day
+        const uniqueId = `${localDate}-${now.getTime()}`;
 
         // Calculate difference from alarm time
         let diffMinutes: number | undefined;
@@ -68,7 +75,8 @@ export const StatisticsProvider: React.FC<{ children: ReactNode }> = ({ children
         }
 
         const newLog: WakeUpLog = {
-            date: now.toISOString().split('T')[0],
+            id: uniqueId,
+            date: localDate,
             wakeUpTime: actualWakeTime,
             actualWakeTime,
             snoozeCount: log.snoozeCount,
@@ -79,9 +87,9 @@ export const StatisticsProvider: React.FC<{ children: ReactNode }> = ({ children
         };
 
         setLogs(prev => {
-            // Prevent duplicate entries for the same day
-            const filtered = prev.filter(l => l.date !== newLog.date);
-            return [...filtered, newLog].slice(-30); // Keep last 30 days
+            // Allow multiple entries per day - use unique ID to prevent exact duplicates
+            const filtered = prev.filter(l => l.id !== newLog.id);
+            return [...filtered, newLog].slice(-100); // Keep last 100 entries for detailed statistics
         });
     }, []);
 
@@ -98,21 +106,30 @@ export const StatisticsProvider: React.FC<{ children: ReactNode }> = ({ children
 
     // Calculate statistics
     const getStats = useCallback(() => {
-        const last7Days = logs.slice(-7);
+        // Sort logs by date to ensure correct ordering
+        const sortedLogs = [...logs].sort((a, b) => a.date.localeCompare(b.date));
 
-        const totalSnooze = logs.reduce((sum, log) => sum + log.snoozeCount, 0);
-        const successCount = logs.filter(log => log.missionCompleted).length;
+        // BUG FIX: Filter by actual calendar dates, not last N entries
+        // Calculate date 7 days ago in YYYY-MM-DD format (includes today = 7 days total)
+        const today = new Date();
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(today.getDate() - 6); // -6 because we include today
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+        const last7Days = sortedLogs.filter(log => log.date >= sevenDaysAgoStr);
+
+        const totalSnooze = sortedLogs.reduce((sum, log) => sum + log.snoozeCount, 0);
+        const successCount = sortedLogs.filter(log => log.missionCompleted).length;
 
         // Calculate average wake delay
-        const logsWithDelay = logs.filter(log => log.diffMinutes !== undefined);
+        const logsWithDelay = sortedLogs.filter(log => log.diffMinutes !== undefined);
         const totalDelay = logsWithDelay.reduce((sum, log) => sum + (log.diffMinutes || 0), 0);
         const averageWakeDelay = logsWithDelay.length > 0 ? totalDelay / logsWithDelay.length : 0;
 
         return {
-            logs,
+            logs: sortedLogs,
             last7Days,
-            averageSnoozeCount: logs.length > 0 ? totalSnooze / logs.length : 0,
-            successRate: logs.length > 0 ? (successCount / logs.length) * 100 : 0,
+            averageSnoozeCount: sortedLogs.length > 0 ? totalSnooze / sortedLogs.length : 0,
+            successRate: sortedLogs.length > 0 ? (successCount / sortedLogs.length) * 100 : 0,
             averageWakeDelay,
         };
     }, [logs]);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Background from './components/Background';
-import ClockDial from './components/ClockDial';
+import DigitalTimePicker from './components/DigitalTimePicker';
 import AlarmRing from './components/AlarmRing';
 import MissionOverlay from './components/MissionOverlay';
 import MorningDashboard from './components/MorningDashboard';
@@ -10,10 +10,10 @@ import PermissionBanner from './components/PermissionBanner';
 import PenguinCharacter from './components/PenguinCharacter';
 import UpdateBanner from './components/UpdateBanner';
 import StatisticsDashboard from './components/StatisticsDashboard';
-import { useAlarm } from './hooks/useAlarm';
+import { useAlarm, type MissionType } from './hooks/useAlarm';
 import { useStatistics } from './contexts/StatisticsContext';
-import { Settings, Moon, Palette, WifiOff, BarChart3 } from 'lucide-react';
-import { t, formatTime } from './utils/i18n';
+import { Settings, Moon, WifiOff, BarChart3 } from 'lucide-react';
+import { t } from './utils/i18n';
 
 function App() {
   const {
@@ -42,7 +42,6 @@ function App() {
     missionDifficulty,
     use24Hour,
     setUse24Hour,
-    nextAlarmTime,
     isAudioBlocked,
     playBlockedAudio,
     weatherEnabled,
@@ -51,14 +50,19 @@ function App() {
     setVibrationPattern,
     qrRegisteredCode,
     setQrRegisteredCode,
+    setMissionType,
+    setMissionDifficulty,
+    setSnoozeLimit,
   } = useAlarm();
 
   const [isMissionActive, setIsMissionActive] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [theme, setTheme] = useState<'default' | 'penguin'>('penguin');
+  const [theme] = useState<'default' | 'penguin'>('penguin');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  // Temporary fallback mission type for current alarm only (doesn't overwrite saved settings)
+  const [fallbackMissionType, setFallbackMissionType] = useState<MissionType | null>(null);
 
   const { addLog } = useStatistics();
 
@@ -84,15 +88,17 @@ function App() {
     setIsMissionActive(true);
   };
 
-  const handleMissionComplete = () => {
+  const handleMissionComplete = (actualMissionType: MissionType) => {
     // Log the wake-up for statistics with extended info
+    // Use the actual resolved mission type (not 'random') for accurate statistics
     addLog({
       snoozeCount,
       missionCompleted: true,
-      missionType,
+      missionType: actualMissionType,
       alarmTime: alarmTime ? `${String(alarmTime.getHours()).padStart(2, '0')}:${String(alarmTime.getMinutes()).padStart(2, '0')}` : undefined,
     });
     setIsMissionActive(false);
+    setFallbackMissionType(null); // Clear temporary fallback after mission completes
     stopAlarm();
     setShowDashboard(true);
   };
@@ -101,11 +107,9 @@ function App() {
     setShowDashboard(false);
   };
 
-
   // Determine text colors based on theme and time
   const isLightBackground = theme === 'penguin' && timeOfDay === 'day';
   const textColor = isLightBackground ? 'text-slate-800' : 'text-white';
-  const subTextColor = isLightBackground ? 'text-slate-600' : 'text-white/70';
   const iconColor = isLightBackground ? 'text-slate-700' : 'text-nebula-400';
   const buttonBg = isLightBackground ? 'bg-white/40 hover:bg-white/60 border-white/20' : 'bg-white/5 hover:bg-white/10 border-white/10';
 
@@ -129,12 +133,14 @@ function App() {
       {isMissionActive && (
         <MissionOverlay
           onComplete={handleMissionComplete}
-          missionType={missionType}
+          missionType={fallbackMissionType ?? missionType}
           missionDifficulty={missionDifficulty}
           qrRegisteredCode={qrRegisteredCode}
           onFallbackToMath={() => {
-            // QR mission not available, switch to math mission
+            // QR/Photo mission not available - use temporary fallback for current alarm only
+            // This does NOT overwrite the user's saved mission type setting
             setIsMissionActive(false);
+            setFallbackMissionType('math'); // Temporary fallback, not saved to settings
             setTimeout(() => setIsMissionActive(true), 100);
           }}
         />
@@ -167,6 +173,11 @@ function App() {
         vibrationPattern={vibrationPattern}
         setVibrationPattern={setVibrationPattern}
         missionType={missionType}
+        setMissionType={setMissionType}
+        missionDifficulty={missionDifficulty}
+        setMissionDifficulty={setMissionDifficulty}
+        snoozeLimit={snoozeLimit}
+        setSnoozeLimit={setSnoozeLimit}
         qrRegisteredCode={qrRegisteredCode}
         setQrRegisteredCode={setQrRegisteredCode}
       />
@@ -190,16 +201,9 @@ function App() {
           {!isOnline && (
             <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 animate-pulse">
               <WifiOff className="w-3 h-3 text-amber-400" aria-hidden="true" />
-              <span className="text-xs text-amber-400">오프라인</span>
+              <span className="text-xs text-amber-400">{t('offline')}</span>
             </div>
           )}
-          <button
-            onClick={() => setTheme(prev => prev === 'default' ? 'penguin' : 'default')}
-            className={`p-2 rounded-full backdrop-blur-md border transition-colors ${buttonBg}`}
-            aria-label="Toggle Theme"
-          >
-            <Palette className={`w-4 h-4 ${isLightBackground ? 'text-slate-600' : 'text-nebula-300'}`} />
-          </button>
           <div className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border ${buttonBg}`}>
             <Moon className={`w-4 h-4 ${isLightBackground ? 'text-slate-600' : 'text-nebula-500'}`} aria-hidden="true" />
             <span className={`text-xs font-medium tracking-wider uppercase ${isLightBackground ? 'text-slate-700' : 'text-nebula-100'}`}>{t('appName')}</span>
@@ -209,7 +213,7 @@ function App() {
         <button
           onClick={() => setIsStatsOpen(true)}
           className={`p-3 rounded-full backdrop-blur-md border transition-colors focus:outline-none focus:ring-2 focus:ring-nebula-500 focus:ring-offset-2 focus:ring-offset-nebula-900 ${buttonBg}`}
-          aria-label="통계 보기"
+          aria-label={t('viewStats')}
         >
           <BarChart3 className={`w-6 h-6 ${iconColor}`} aria-hidden="true" />
         </button>
@@ -218,64 +222,38 @@ function App() {
       {/* Main Clock */}
       <main className="flex-1 flex flex-col items-center justify-center z-10 w-full max-w-md relative" role="main">
 
-        <div className="relative mb-12 z-10">
+        <div className="relative mb-12 z-10 w-80 h-80 sm:w-96 sm:h-96 flex items-center justify-center">
           {/* Penguin Character - Aligned behind the clock */}
           {theme === 'penguin' && (
-            <div className="absolute inset-0 z-[-1] rounded-full overflow-hidden opacity-90">
+            <div className="absolute inset-0 opacity-100">
               <PenguinCharacter
                 state={isAlarmActive ? 'waking' : 'idle'}
-                className="w-full h-full object-cover scale-110"
+                className="w-full h-full"
               />
-              {/* Overlay to ensure text readability if needed, though text color change should handle it */}
-              <div className="absolute inset-0 bg-white/10 pointer-events-none" />
             </div>
           )}
 
-          <ClockDial
-            alarmTime={alarmTime}
-            onAlarmSet={setAlarmTime}
-            nextAlarmTime={nextAlarmTime}
-            use24Hour={use24Hour}
-            theme={theme}
-            timeOfDay={timeOfDay}
-          />
+          <div className={`relative z-10 ${theme === 'penguin' ? 'pt-20' : ''}`}>
+            <DigitalTimePicker
+              alarmTime={alarmTime}
+              onAlarmSet={setAlarmTime}
+              theme={theme}
+              timeOfDay={timeOfDay}
+              use24Hour={use24Hour}
+            />
+          </div>
         </div>
-
-        {/* Next Alarm Card */}
-        <section
-          className={`w-full backdrop-blur-xl border rounded-3xl p-6 shadow-2xl z-10 transition-colors flex flex-col items-center text-center gap-2 ${isLightBackground ? 'bg-white/60 border-white/40' : 'bg-white/5 border-white/10'}`}
-          aria-label={t('nextWakeUp')}
-        >
-          <div className="flex flex-col items-center gap-1 mb-2">
-            <h2 className={`text-lg font-display font-bold ${textColor}`}>{t('nextWakeUp')}</h2>
-            <p className={`${subTextColor} text-sm`}>
-              {recurrence === 'daily' ? t('tomorrowMorning') : t('nextWorkdayMorning')}
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center gap-2">
-            <span className={`text-5xl font-display font-bold ${textColor}`} aria-label={alarmTime ? `${t('nextAlarmAt')} ${formatTime(alarmTime, use24Hour)}` : t('noAlarmSet')}>
-              {alarmTime ? formatTime(alarmTime, use24Hour) : '--:--'}
-            </span>
-
-            <div className="flex items-center gap-2 mt-1">
-              <div
-                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border transition-colors ${alarmTime ? (isLightBackground ? 'bg-slate-800 text-white border-transparent' : 'bg-nebula-500/20 text-nebula-400 border-nebula-500/30') : 'bg-white/5 text-white/30 border-white/10'}`}
-                role="status"
-                aria-live="polite"
-              >
-                {alarmTime ? t('alarmOn') : t('alarmOff')}
-              </div>
-              {recurrence === 'every-other-day' && <span className="text-xs bg-nebula-500/20 px-2 py-0.5 rounded text-nebula-300">{t('everyOtherDayMode')}</span>}
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}
-      <footer className="w-full z-10 text-center pb-4" role="contentinfo">
-        <p className={`${subTextColor} text-xs`}>{t('swipeForSleep')}</p>
-        <div className={`w-12 h-1 rounded-full mx-auto mt-2 ${isLightBackground ? 'bg-slate-400/50' : 'bg-white/20'}`} aria-hidden="true" />
+      <footer className={`w-full flex justify-center items-center py-4 z-10 ${isLightBackground ? 'text-slate-500' : 'text-white/30'}`}>
+        <div className="flex items-center gap-4 text-xs tracking-widest uppercase">
+          <span>Alarm</span>
+          <div className={`w-1 h-1 rounded-full ${isLightBackground ? 'bg-slate-400' : 'bg-white/20'}`} />
+          <span>Timer</span>
+          <div className={`w-1 h-1 rounded-full ${isLightBackground ? 'bg-slate-400' : 'bg-white/20'}`} />
+          <span>Stopwatch</span>
+        </div>
       </footer>
     </div>
   );

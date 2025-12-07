@@ -7,7 +7,7 @@ import PhotoMission from './missions/PhotoMission';
 import QRMission from './missions/QRMission';
 
 interface MissionOverlayProps {
-    onComplete: () => void;
+    onComplete: (actualMissionType: MissionType) => void;
     missionType?: MissionType;
     missionDifficulty?: MissionDifficulty;
     qrRegisteredCode?: string | null;
@@ -200,7 +200,7 @@ const MissionOverlay: React.FC<MissionOverlayProps> = ({
 
         if (actualType === 'math') {
             if (userAnswer === mathProblem.answer) {
-                onComplete();
+                onComplete(actualType);
             } else {
                 setError(true);
                 setInput('');
@@ -208,7 +208,7 @@ const MissionOverlay: React.FC<MissionOverlayProps> = ({
             }
         } else if (actualType === 'puzzle') {
             if (userAnswer === patternProblem.answer) {
-                onComplete();
+                onComplete(actualType);
             } else {
                 setError(true);
                 setInput('');
@@ -226,17 +226,19 @@ const MissionOverlay: React.FC<MissionOverlayProps> = ({
 
         if (num !== memoryState.sequence[currentIndex]) {
             setError(true);
-            setMemoryState((prev) => ({ ...prev, userInput: [], phase: 'memorize', countdown: 3 }));
+            // Reset to difficulty-appropriate countdown (easy: 5s, medium: 4s, hard: 3s)
+            const resetCountdown = missionDifficulty === 'easy' ? 5 : missionDifficulty === 'medium' ? 4 : 3;
+            setMemoryState((prev) => ({ ...prev, userInput: [], phase: 'memorize', countdown: resetCountdown }));
             setTimeout(() => setError(false), 500);
             return;
         }
 
         if (nextInput.length === memoryState.sequence.length) {
-            onComplete();
+            onComplete(actualType);
         } else {
             setMemoryState((prev) => ({ ...prev, userInput: nextInput }));
         }
-    }, [memoryState, onComplete]);
+    }, [memoryState, onComplete, actualType, missionDifficulty]);
 
     const getMissionIcon = () => {
         switch (actualType) {
@@ -253,9 +255,9 @@ const MissionOverlay: React.FC<MissionOverlayProps> = ({
         switch (actualType) {
             case 'memory': return t('memoryMission');
             case 'puzzle': return t('puzzleMission');
-            case 'typing': return '타이핑 미션';
-            case 'qr': return 'QR 코드 미션';
-            case 'photo': return '사진 미션';
+            case 'typing': return t('typingMission');
+            case 'qr': return t('qrMission');
+            case 'photo': return t('photoMission');
             default: return t('mathMission');
         }
     };
@@ -413,7 +415,7 @@ const MissionOverlay: React.FC<MissionOverlayProps> = ({
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl">
                     <TypingMission
                         difficulty={missionDifficulty}
-                        onComplete={onComplete}
+                        onComplete={() => onComplete(actualType)}
                         onFail={() => setError(true)}
                     />
                 </div>
@@ -423,8 +425,9 @@ const MissionOverlay: React.FC<MissionOverlayProps> = ({
                     {qrRegisteredCode ? (
                         <QRMission
                             registeredCode={qrRegisteredCode}
-                            onComplete={onComplete}
+                            onComplete={() => onComplete(actualType)}
                             onFail={() => setError(true)}
+                            onFallbackToMath={onFallbackToMath}
                         />
                     ) : (
                         <div className="text-center space-y-4">
@@ -442,7 +445,8 @@ const MissionOverlay: React.FC<MissionOverlayProps> = ({
             {actualType === 'photo' && (
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl">
                     <PhotoMission
-                        onComplete={onComplete}
+                        onComplete={() => onComplete(actualType)}
+                        onFallbackToMath={onFallbackToMath}
                     />
                 </div>
             )}

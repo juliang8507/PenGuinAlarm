@@ -49,32 +49,36 @@ const MorningDashboard: React.FC<MorningDashboardProps> = ({ onDismiss, weatherE
                     <h1 className="text-4xl font-display font-bold">{t('goodMorningGreeting')}</h1>
                     <p className="text-nebula-300">{t('todayIs')} {format(now, getLanguage() === 'ko' ? 'M월 d일 EEEE' : 'EEEE, MMM d', { locale: getLanguage() === 'ko' ? ko : enUS })}</p>
                 </div>
-                <div className="p-4 bg-white/5 rounded-full backdrop-blur-md">
-                    {loading ? <CloudSun className="w-8 h-8 text-white/50 animate-pulse" /> : getWeatherIcon(weatherCode)}
-                </div>
+                {weatherEnabled && (
+                    <div className="p-4 bg-white/5 rounded-full backdrop-blur-md">
+                        {loading ? <CloudSun className="w-8 h-8 text-white/50 animate-pulse" /> : getWeatherIcon(weatherCode)}
+                    </div>
+                )}
             </div>
 
             {/* Main Content */}
             <div className="w-full flex-1 flex flex-col justify-center gap-6">
-                {/* Weather Card */}
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-                    {loading ? (
-                        <div className="w-full text-center text-white/50">{t('loadingWeather')}</div>
-                    ) : error ? (
-                        <div className="w-full text-center text-red-300 text-sm">{error}</div>
-                    ) : (
-                        <>
-                            <div>
-                                <span className="text-5xl font-bold">{temperature}°</span>
-                                <p className="text-nebula-300">{getWeatherDescription(weatherCode)}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-sm text-white/50">{t('highTemp')}: {maxTemp}°</p>
-                                <p className="text-sm text-white/50">{t('lowTemp')}: {minTemp}°</p>
-                            </div>
-                        </>
-                    )}
-                </div>
+                {/* Weather Card - only shown when weather is enabled */}
+                {weatherEnabled && (
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
+                        {loading ? (
+                            <div className="w-full text-center text-white/50">{t('loadingWeather')}</div>
+                        ) : error ? (
+                            <div className="w-full text-center text-red-300 text-sm">{error}</div>
+                        ) : (
+                            <>
+                                <div>
+                                    <span className="text-5xl font-bold">{temperature}°</span>
+                                    <p className="text-nebula-300">{getWeatherDescription(weatherCode)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm text-white/50">{t('highTemp')}: {maxTemp}°</p>
+                                    <p className="text-sm text-white/50">{t('lowTemp')}: {minTemp}°</p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 {/* Quote/Info Card */}
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">

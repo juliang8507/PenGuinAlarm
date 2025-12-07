@@ -10,18 +10,18 @@ const PenguinCharacter: React.FC<PenguinCharacterProps> = ({ state, className = 
         switch (state) {
             case 'sleeping':
                 return {
-                    imageSrc: '/assets/penguin/sleeping.png',
+                    imageSrc: '/assets/penguin/sleeping.png?v=4',
                     animationClass: 'animate-breathe-slow'
                 };
             case 'waking':
                 return {
-                    imageSrc: '/assets/penguin/waking.png',
+                    imageSrc: '/assets/penguin/waking.png?v=4',
                     animationClass: 'animate-bounce-gentle'
                 };
             case 'idle':
             default:
                 return {
-                    imageSrc: '/assets/penguin/idle.png',
+                    imageSrc: '/assets/penguin/idle.png?v=4',
                     animationClass: 'animate-sway'
                 };
         }
@@ -32,7 +32,7 @@ const PenguinCharacter: React.FC<PenguinCharacterProps> = ({ state, className = 
             <img
                 src={imageSrc}
                 alt="Cute Penguin"
-                className={`w-full h-full object-contain drop-shadow-xl transition-all duration-500 ${animationClass}`}
+                className={`w-full h-full object-contain drop-shadow-xl transition-all duration-500 ${animationClass} mix-blend-multiply rounded-full`}
             />
             {state === 'sleeping' && (
                 <div className="absolute -top-4 right-0 animate-float-up text-2xl font-bold text-white/80">

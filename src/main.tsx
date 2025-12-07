@@ -10,6 +10,7 @@ import {
   pwaManager,
   audioAutoplayManager,
   wakeLockManager,
+  notificationManager,
 } from './utils/notifications'
 
 // Register service worker via VitePWA
@@ -30,6 +31,16 @@ window.__updateSW = updateSW
 pwaManager.init()
 audioAutoplayManager.init()
 wakeLockManager.setupVisibilityHandler()
+
+// Hook VitePWA's service worker registration into notificationManager
+// This enables background alarm sync and push notifications
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.then((registration) => {
+    notificationManager.setServiceWorker(registration)
+  }).catch((err) => {
+    console.error('Failed to get service worker registration:', err)
+  })
+}
 
 // Global error handler for unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
