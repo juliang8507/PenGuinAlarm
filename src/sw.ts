@@ -398,8 +398,8 @@ async function showBackgroundAlarmNotification(): Promise<void> {
 
         const options: ExtendedNotificationOptions = {
             body: swT('alarmBody'),
-            icon: '/penguin-icon-192.png',
-            badge: '/penguin-icon-192.png',
+            icon: '/penguin-icon-192.jpg',
+            badge: '/penguin-icon-192.jpg',
             tag: 'nebula-alarm-background',
             requireInteraction: true,
             // Only include vibrate property if user has enabled vibration
@@ -530,8 +530,8 @@ self.addEventListener('push', (event: PushEvent) => {
 
     const options: ExtendedNotificationOptions = {
         body: data.body,
-        icon: '/penguin-icon-192.png',
-        badge: '/penguin-icon-192.png',
+        icon: '/penguin-icon-192.jpg',
+        badge: '/penguin-icon-192.jpg',
         tag: 'nebula-alarm',
         requireInteraction: true,
         // Only include vibrate property if user has enabled vibration
